@@ -14,21 +14,17 @@ bất kể nội dung đó có thật sự liên quan đến câu hỏi hay khô
 quyết định fallback ở Task 9 — xem ghi chú ở đó.
 """
 
+import os
+
 import numpy as np
+import requests
+from dotenv import load_dotenv
 
-# Cross-encoder model dùng chung cho toàn module, load lazy (chỉ khi gọi lần đầu)
-# để các phương pháp khác (MMR, RRF) không bị bắt buộc cài thêm dependency nặng.
-_CROSS_ENCODER_MODEL_NAME = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
-_cross_encoder = None
+load_dotenv()
 
-
-def _get_cross_encoder():
-    global _cross_encoder
-    if _cross_encoder is None:
-        from sentence_transformers import CrossEncoder
-
-        _cross_encoder = CrossEncoder(_CROSS_ENCODER_MODEL_NAME)
-    return _cross_encoder
+JINA_RERANK_URL = "https://api.jina.ai/v1/rerank"
+JINA_RERANK_MODEL = "jina-reranker-v2-base-multilingual"
+JINA_TIMEOUT_SECONDS = 30
 
 
 def _cosine_sim(a: list[float], b: list[float]) -> float:
@@ -44,7 +40,7 @@ def rerank_cross_encoder(
     query: str, candidates: list[dict], top_k: int = 5
 ) -> list[dict]:
     """
-    Rerank candidates sử dụng cross-encoder model (local, sentence-transformers).
+    Rerank candidates bằng Jina Reranker API.
 
     Cross-encoder khác dense retrieval ở chỗ nó encode (query, document) CÙNG LÚC
     qua 1 transformer duy nhất thay vì encode riêng rồi so cosine — chậm hơn nhiều
@@ -58,19 +54,55 @@ def rerank_cross_encoder(
 
     Returns:
         List of top_k candidates, re-scored và sorted by rerank_score descending.
+
+    Nếu không có JINA_API_KEY hoặc API gặp lỗi, tự động fallback về RRF để
+    pipeline vẫn hoạt động mà không cần dịch vụ bên ngoài.
     """
-    if not candidates:
+    if not candidates or top_k <= 0:
         return []
 
-    model = _get_cross_encoder()
-    pairs = [(query, c["content"]) for c in candidates]
-    scores = model.predict(pairs)
+    api_key = os.getenv("JINA_API_KEY", "").strip()
+    if not api_key or api_key == "jina_...":
+        print("⚠ Không có JINA_API_KEY, fallback về RRF.")
+        return rerank_rrf([candidates], top_k=top_k)
 
-    reranked = [
-        {**c, "score": float(s)} for c, s in zip(candidates, scores)
-    ]
-    reranked.sort(key=lambda x: x["score"], reverse=True)
-    return reranked[:top_k]
+    try:
+        response = requests.post(
+            JINA_RERANK_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": JINA_RERANK_MODEL,
+                "query": query,
+                "documents": [candidate["content"] for candidate in candidates],
+                "top_n": min(top_k, len(candidates)),
+            },
+            timeout=JINA_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        api_results = response.json().get("results", [])
+
+        reranked = []
+        for result in api_results:
+            index = result.get("index")
+            if not isinstance(index, int) or not 0 <= index < len(candidates):
+                continue
+
+            item = candidates[index].copy()
+            item["retrieval_score"] = item.get("score", 0.0)
+            item["score"] = float(result.get("relevance_score", 0.0))
+            reranked.append(item)
+
+        if not reranked:
+            raise ValueError("Jina API không trả về kết quả hợp lệ")
+
+        reranked.sort(key=lambda item: item["score"], reverse=True)
+        return reranked[:top_k]
+    except (requests.RequestException, ValueError, TypeError, KeyError) as exc:
+        print(f"⚠ Jina Reranker lỗi ({exc}), fallback về RRF.")
+        return rerank_rrf([candidates], top_k=top_k)
 
 
 def rerank_mmr(
@@ -174,7 +206,7 @@ def rerank(
     query: str,
     candidates: list[dict],
     top_k: int = 5,
-    method: str = "rrf",  # "cross_encoder" | "mmr" | "rrf"
+    method: str = "cross_encoder",  # Jina nếu có key, nếu không tự fallback RRF
 ) -> list[dict]:
     """
     Unified reranking interface.
