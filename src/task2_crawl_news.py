@@ -18,7 +18,7 @@ Gợi ý chủ đề: thông báo tuyển sinh, sự kiện, dịch vụ thư vi
 
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "landing" / "news"
@@ -29,11 +29,13 @@ def setup_directory():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# TODO: Điền danh sách URL bài viết cần crawl
 ARTICLE_URLS = [
-    # Ví dụ (trang công khai RMIT Vietnam):
-    # "https://www.rmit.edu.vn/libraryvn/...",
-    # "https://www.rmit.edu.vn/students/...",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2026/may/sinh-vien-rmit-duoc-trao-hoc-bong-voices-of-the-future-fellow-dau-tien",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2026/jan/dai-hoc-rmit-viet-nam-cong-bo-chuong-trinh-hoc-bong-ky-luc-tri-gia-hon-200-ti-dong",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2026/mar/dai-hoc-rmit-dau-tu-manh-vao-nghien-cuu-voi-65-hoc-bong-tien-si",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2025/oct/rmit-viet-nam-trao-hoc-bong-tri-gia-47-5-ti-dong-nam-2025",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2020/thang-1/binh-dang-giao-duc-cho-moi-sinh-vien",
+    "https://www.rmit.edu.vn/vi/tin-tuc/tat-ca-tin-tuc/2022/nov/sinh-vien-hoc-bong-tim-thay-suc-manh-tu-y-tuong-duoc-lan-toa",
 ]
 
 
@@ -51,16 +53,32 @@ async def crawl_article(url: str) -> dict:
     """
     from crawl4ai import AsyncWebCrawler
 
-    # TODO: Implement crawling logic
-    # async with AsyncWebCrawler() as crawler:
-    #     result = await crawler.arun(url=url)
-    #     return {
-    #         "url": url,
-    #         "title": result.metadata.get("title", "Unknown"),
-    #         "date_crawled": datetime.now().isoformat(),
-    #         "content_markdown": result.markdown,
-    #     }
-    raise NotImplementedError("Implement crawl_article")
+    async with AsyncWebCrawler() as crawler:
+        result = await crawler.arun(url=url)
+
+    if not result.success:
+        error = getattr(result, "error_message", "Unknown crawl error")
+        raise RuntimeError(f"Không thể crawl {url}: {error}")
+
+    # Crawl4AI mới trả về MarkdownGenerationResult, phiên bản cũ trả về str.
+    markdown_result = result.markdown
+    content = getattr(markdown_result, "fit_markdown", None)
+    if not content:
+        content = getattr(markdown_result, "raw_markdown", None)
+    if not content:
+        content = str(markdown_result or "")
+
+    content = content.strip()
+    if not content:
+        raise RuntimeError(f"Trang {url} không có nội dung Markdown")
+
+    metadata = result.metadata or {}
+    return {
+        "url": result.url or url,
+        "title": metadata.get("title") or "Unknown",
+        "date_crawled": datetime.now(timezone.utc).isoformat(),
+        "content_markdown": content,
+    }
 
 
 async def crawl_all():
