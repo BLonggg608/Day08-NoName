@@ -14,11 +14,13 @@ Base URL: "https://openrouter.ai/api/v1", dùng chung interface với OpenAI SDK
 """
 
 import os
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv():
+        return False
 
 load_dotenv()
-
-from .task9_retrieval_pipeline import retrieve
 
 
 # =============================================================================
@@ -138,6 +140,8 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         }
     """
     # Step 1: Retrieve
+    from .task9_retrieval_pipeline import retrieve
+
     chunks = retrieve(query, top_k=top_k)
 
     if not chunks:
