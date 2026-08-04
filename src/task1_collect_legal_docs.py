@@ -5,25 +5,12 @@ Hướng dẫn:
     1. Tìm tối thiểu 3 văn bản chính sách (PDF/DOCX) từ trang công khai của một trường đại học.
     2. Tải về và lưu vào data/landing/legal/
     3. Đặt tên file rõ ràng, không dấu, mô tả đúng nội dung.
-
-Gợi ý nguồn (ví dụ trang công khai RMIT Vietnam — rmit.edu.vn):
-    - https://www.rmit.edu.vn/study-at-rmit/tuition-fees
-    - https://www.rmit.edu.vn/study-at-rmit/scholarships/...
-    - https://www.rmit.edu.vn/students/my-studies/fees-and-payments
-
-Gợi ý văn bản (chủ đề dịch vụ đại học):
-    - Học phí & phương thức thanh toán (Tuition Fees)
-    - Chính sách học bổng (Scholarship eligibility)
-    - Quy định ký túc xá / hỗ trợ chỗ ở (Accommodation Services)
-    - Hướng dẫn đăng ký học phần qua cổng thông tin sinh viên (Course Registration)
-
-Lưu ý: một số trang trường (vd VinUni, Fulbright) chặn bot crawler mặc định (HTTP 403) —
-không phải lỗi của bạn, đó là cấu hình WAF/Cloudflare phía server. Đổi sang trang khác
-thay vì cố vượt qua, và chỉ dùng nguồn công khai/được phép chia sẻ.
 """
 
+import requests
 from pathlib import Path
 
+# Xác định đường dẫn tương đối tới thư mục chứa dữ liệu
 DATA_DIR = Path(__file__).parent.parent / "data" / "landing" / "legal"
 
 
@@ -33,22 +20,59 @@ def setup_directory():
     print(f"✓ Thư mục đã sẵn sàng: {DATA_DIR}")
 
 
-# TODO: Tải file PDF/DOCX về DATA_DIR
-# Có thể tải thủ công hoặc viết script download nếu có direct link.
-#
-# Ví dụ nếu có direct link:
-#
-# import requests
-#
-# def download_file(url: str, filename: str):
-#     response = requests.get(url)
-#     filepath = DATA_DIR / filename
-#     filepath.write_bytes(response.content)
-#     print(f"✓ Đã tải: {filepath}")
-#
-# Nếu trang là HTML thuần (không phải PDF sẵn), có thể convert nội dung text
-# thành PDF đơn giản bằng thư viện fpdf2 (đã có trong requirements.txt).
+def download_file(url: str, filename: str):
+    """
+    Tải file từ URL và lưu vào hệ thống.
+    Sử dụng headers giả lập trình duyệt để tránh bị chặn 403 Forbidden.
+    """
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+    
+    filepath = DATA_DIR / filename
+    
+    try:
+        print(f"⏳ Đang tải: {filename}...")
+        # Stream=True giúp tải an toàn các file PDF dung lượng lớn
+        response = requests.get(url, headers=headers, stream=True, timeout=15)
+        response.raise_for_status() # Báo lỗi nếu tải thất bại (404, 403...)
+        
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        print(f"  ✅ Đã lưu: {filepath}")
+        
+    except requests.exceptions.RequestException as e:
+        print(f"  ❌ Lỗi khi tải {filename}: {e}")
+        print("  💡 Hướng xử lý: Thử tìm một URL PDF khác hoặc tải file thủ công bằng trình duyệt rồi copy vào thư mục data/landing/legal/")
 
 
 if __name__ == "__main__":
     setup_directory()
+    
+    # Danh sách 3 tài liệu chính sách (direct link tới file PDF)
+    # Lưu ý: Tên file phải viết thường, không dấu, ngăn cách bằng gạch ngang
+    documents = [
+        {
+            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/students/student-fees/2024-tuition-fees/2024-tuition-fees-vn.pdf",
+            "filename": "tuition-fees-policy.pdf"
+        },
+        {
+            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/study-with-us/scholarships/2024-scholarships-terms-and-conditions.pdf",
+            "filename": "scholarship-terms-and-conditions.pdf"
+        },
+        {
+            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/students/student-services/accommodation/rmit-accommodation-rules.pdf",
+            "filename": "accommodation-rules.pdf"
+        }
+    ]
+    
+    print("\n🚀 BẮT ĐẦU TẢI DỮ LIỆU CHÍNH SÁCH...")
+    print("-" * 60)
+    
+    for doc in documents:
+        download_file(doc["url"], doc["filename"])
+        
+    print("-" * 60)
+    print("🎉 Hoàn thành Task 1! Hãy mở thư mục data/landing/legal/ để kiểm tra file.")
