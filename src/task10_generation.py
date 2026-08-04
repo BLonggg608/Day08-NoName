@@ -38,6 +38,7 @@ TOP_P = 0.9
 # temperature: Độ ngẫu nhiên của output
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
+LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "512"))
 
 # TODO: Chọn LLM model (OpenRouter model ID)
 LLM_MODEL = "openai/gpt-4o-mini"  # hoặc model ":free" nếu chưa có credit
@@ -117,7 +118,7 @@ def format_context(chunks: list[dict]) -> str:
 # GENERATION
 # =============================================================================
 
-def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
+def generate_with_citation(query: str, top_k: int = TOP_K, use_reranking: bool = True) -> dict:
     """
     End-to-end RAG generation có citation.
 
@@ -142,7 +143,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
     # Step 1: Retrieve
     from .task9_retrieval_pipeline import retrieve
 
-    chunks = retrieve(query, top_k=top_k)
+    chunks = retrieve(query, top_k=top_k, use_reranking=use_reranking)
 
     if not chunks:
         return {
@@ -174,6 +175,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         ],
         temperature=TEMPERATURE,
         top_p=TOP_P,
+        max_tokens=LLM_MAX_TOKENS,
     )
 
     answer = response.choices[0].message.content
