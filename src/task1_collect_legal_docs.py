@@ -55,16 +55,16 @@ if __name__ == "__main__":
     # Lưu ý: Tên file phải viết thường, không dấu, ngăn cách bằng gạch ngang
     documents = [
         {
-            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/students/student-fees/2024-tuition-fees/2024-tuition-fees-vn.pdf",
-            "filename": "tuition-fees-policy.pdf"
+            "url": "https://www.bing.com/ck/a?!&&p=9a04e44296c5f305ada01666aefa3bbf32ed3b3b63c1c1231bb2b7bb75dea808JmltdHM9MTc4NTcxNTIwMA&ptn=3&ver=2&hsh=4&fclid=07e7bb2b-00e9-615d-30c7-adb2018f60b4&psq=rmit-university-vietnam-scholarship-terms-and-conditions.pdf&u=a1aHR0cHM6Ly93d3cucm1pdC5lZHUudm4vY29udGVudC9kYW0vcm1pdC92bi9lbi9hc3NldHMtZm9yLXByb2R1Y3Rpb24vZG9jdW1lbnRzL3BkZnMvc3R1ZHktYXQtcm1pdC9zY2hvbGFyc2hpcHMvZW5nbGlzaC1wZGYvcm1pdC11bml2ZXJzaXR5LXZpZXRuYW0tc2Nob2xhcnNoaXAtdGVybXMtYW5kLWNvbmRpdGlvbnMucGRm",
+            "filename": "rmit-university-vietnam-scholarship-terms-and-conditions.pdf"
         },
         {
-            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/study-with-us/scholarships/2024-scholarships-terms-and-conditions.pdf",
-            "filename": "scholarship-terms-and-conditions.pdf"
+            "url": "https://www.bing.com/ck/a?!&&p=fb655db6e306e450e96966ea13e10a10b3fed29e5e77d699c55317c70f0691e3JmltdHM9MTc4NTcxNTIwMA&ptn=3&ver=2&hsh=4&fclid=07e7bb2b-00e9-615d-30c7-adb2018f60b4&psq=student-fees-and-charges-guide-06-2026.pdf&u=a1aHR0cHM6Ly93d3cucm1pdC5lZHUudm4vY29udGVudC9kYW0vcm1pdC92bi9lbi9hc3NldHMtZm9yLXByb2R1Y3Rpb24vZG9jdW1lbnRzL3BkZnMvc3R1ZHktYXQtcm1pdC90dWl0aW9uLWZlZXMvc3R1ZGVudC1mZWVzLWFuZC1jaGFyZ2VzLWd1aWRlLTA2LTIwMjYucGRm",
+            "filename": "student-fees-and-charges-guide-06-2026.pdf"
         },
         {
-            "url": "https://www.rmit.edu.vn/content/dam/rmit/vn/en/assets-for-production/documents/students/student-services/accommodation/rmit-accommodation-rules.pdf",
-            "filename": "accommodation-rules.pdf"
+            "url": "https://www.bing.com/ck/a?!&&p=65d630ff5da6e9b5a7a58f00065094a0985fc45d6eb6a5874f59adab2d7baeeeJmltdHM9MTc4NTcxNTIwMA&ptn=3&ver=2&hsh=4&fclid=07e7bb2b-00e9-615d-30c7-adb2018f60b4&psq=brochure-for-international-students-vi.pdf&u=a1aHR0cHM6Ly93d3cucm1pdC5lZHUudm4vYXNzZXRzL3ZuL2VuL2Fzc2V0cy1mb3ItcHJvZHVjdGlvbi9kb2N1bWVudHMvcGRmcy9zdHVkeS1hdC1ybWl0L2ludGVybmF0aW9uYWwtc3R1ZGVudHMvaW50ZXJuYXRpb25hbC1zdHVkZW50LWd1aWRlLTIwMjYucGRm",
+            "filename": "international-student-guide-2026.pdf"
         }
     ]
     
