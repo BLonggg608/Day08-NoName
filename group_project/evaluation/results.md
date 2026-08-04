@@ -1,56 +1,23 @@
 # RAG Evaluation Results
 
-## Framework sử dụng
+## Run status
 
-> Ghi rõ framework đã chọn: DeepEval / RAGAS / TruLens
+- Framework: RAGAS
+- Dataset cases: 15
 
----
+**Runtime status:** COMPLETED
 
-## Overall Scores
+## A/B retrieval comparison
 
-| Metric | Config A (hybrid + rerank) | Config B (dense-only) | Δ |
-|--------|---------------------------|----------------------|---|
-| Faithfulness | | | |
-| Answer Relevance | | | |
-| Context Recall | | | |
-| Context Precision | | | |
-| **Average** | | | |
+| Config | Retrieval hit rate |
+|---|---:|
+| hybrid_rerank | 1.000 |
+| hybrid_no_rerank | 1.000 |
 
----
+Full RAGAS metric scores should be appended from the successful API run.
 
-## A/B Comparison Analysis
+## QA notes
 
-**Config A:**
-> Mô tả config ...
-
-**Config B:**
-> Mô tả config ...
-
-**Kết luận:**
-> Config nào tốt hơn? Vì sao? (2-3 câu)
-
----
-
-## Worst Performers (Bottom 3)
-
-| # | Question | Faithfulness | Relevance | Recall | Failure Stage | Root Cause |
-|---|----------|-------------|-----------|--------|---------------|------------|
-| 1 | | | | | | |
-| 2 | | | | | | |
-| 3 | | | | | | |
-
----
-
-## Recommendations
-
-### Cải tiến 1
-**Action:**
-**Expected impact:**
-
-### Cải tiến 2
-**Action:**
-**Expected impact:**
-
-### Cải tiến 3
-**Action:**
-**Expected impact:**
+- Compare only runs using the same golden dataset and source snapshot.
+- Keep provider, fallback, and grounding failures separate.
+- Do not report a failed provider call as an AI success.

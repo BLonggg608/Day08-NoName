@@ -1,17 +1,17 @@
 [
-  {
-    "question": "Học phí hàng năm của chương trình Business tại RMIT Vietnam là bao nhiêu?",
-    "expected_answer": "Khoảng 375.840.000 VND mỗi năm (tùy chương trình cụ thể).",
-    "expected_context": "Trang Tuition Fees, mục Undergraduate Programs"
-  },
-  {
-    "question": "Học phí được thanh toán theo hình thức nào?",
-    "expected_answer": "Thanh toán theo từng học kỳ, tính theo từng môn học đã đăng ký.",
-    "expected_context": "Trang Tuition Fees, mục Payment Structure"
-  },
-  {
-    "question": "Trường có cung cấp ký túc xá trong khuôn viên không?",
-    "expected_answer": "Không — trường không cung cấp chỗ ở trong khuôn viên, nhưng có đội ngũ hỗ trợ sinh viên tìm chỗ ở gần trường.",
-    "expected_context": "Trang Accommodation Services"
-  }
+  {"question":"Tài liệu Student Fees & Charges Guide áp dụng cho năm nào?","expected_answer":"Tài liệu áp dụng cho năm 2026.","expected_context":"student-fees-and-charges-guide-06-2026.md | 2026 STUDENT FEES & CHARGES GUIDE"},
+  {"question":"Ai ban hành Student Fees & Charges Guide?","expected_answer":"Tài liệu được ban hành bởi Academic Registrar's Group (ARG) tại Việt Nam.","expected_context":"student-fees-and-charges-guide-06-2026.md | Issued by: Academic Registrar's Group (ARG) (Vietnam)"},
+  {"question":"Student Fees & Charges Guide được cập nhật lần cuối vào ngày nào?","expected_answer":"Tài liệu được cập nhật lần cuối vào ngày 17 June 2026.","expected_context":"student-fees-and-charges-guide-06-2026.md | Last updated: 17 June 2026"},
+  {"question":"Student Fees & Charges Guide có mục Tuition Fees không?","expected_answer":"Có. Mục 4 của tài liệu là Tuition Fees.","expected_context":"student-fees-and-charges-guide-06-2026.md | 4. Tuition Fees"},
+  {"question":"Student Fees & Charges Guide có đề cập đến Scholarship Students không?","expected_answer":"Có. Mục 3.3 đề cập đến Scholarship Students.","expected_context":"student-fees-and-charges-guide-06-2026.md | 3.3 Scholarship Students"},
+  {"question":"Tài liệu học bổng RMIT dành cho nhóm người nhận nào?","expected_answer":"Tài liệu nêu các điều khoản dành cho người nhận học bổng do RMIT Vietnam tài trợ.","expected_context":"rmit-university-vietnam-scholarship-terms-and-conditions.md | terms and conditions stated in this document are for the recipients of scholarships funded by RMIT Vietnam"},
+  {"question":"Một học bổng có thể có điều khoản riêng bổ sung không?","expected_answer":"Có. Một số học bổng có thể có điều khoản riêng hoặc bổ sung.","expected_context":"rmit-university-vietnam-scholarship-terms-and-conditions.md | Some certain scholarships may have separate or unique terms and conditions"},
+  {"question":"Scholarship Terms & Conditions có nói đến scholarship offer letter không?","expected_answer":"Có. Tài liệu nói scholarship offer và scholarship offer letter được dùng thay thế cho nhau.","expected_context":"rmit-university-vietnam-scholarship-terms-and-conditions.md | A scholarship offer and a scholarship offer letter are used interchangeably"},
+  {"question":"Có thể yêu cầu bản PDF của điều khoản học bổng bằng cách nào?","expected_answer":"Có thể yêu cầu bản PDF bằng cách gửi email đến scholarships@rmit.edu.vn.","expected_context":"rmit-university-vietnam-scholarship-terms-and-conditions.md | A PDF copy of this document can be ordered by emailing to scholarships@rmit.edu.vn"},
+  {"question":"Brochure dành cho nhóm sinh viên nào?","expected_answer":"Brochure là cẩm nang du học toàn cầu cùng RMIT dành cho sinh viên quốc tế.","expected_context":"brochure-for-international-students-vi.md | Cẩm nang du học toàn cầu cùng RMIT"},
+  {"question":"Brochure có mục về các chương trình chuyển tiếp sang RMIT Melbourne không?","expected_answer":"Có. Brochure có mục Chương trình Chuyển tiếp sang RMIT Melbourne.","expected_context":"brochure-for-international-students-vi.md | Chương trình Chuyển tiếp sang RMIT Melbourne"},
+  {"question":"Brochure có đề cập đến tài chính không?","expected_answer":"Có. Brochure có mục Tài chính trong phần những điều cần lưu ý.","expected_context":"brochure-for-international-students-vi.md | Những điều cần lưu ý | Tài chính"},
+  {"question":"Bài viết Voices of the Future Fellow nói về ai?","expected_answer":"Bài viết nói về sinh viên RMIT Việt Nam Nguyễn Phú Thịnh, người nhận học bổng Voices of the Future Fellow đầu tiên.","expected_context":"article_01.md | Sinh viên RMIT được trao học bổng Voices of the Future Fellow đầu tiên"},
+  {"question":"Học bổng Voices of the Future kéo dài bao lâu theo bài viết?","expected_answer":"Bài viết cho biết chương trình kéo dài tám tháng.","expected_context":"article_01.md | chương trình kéo dài tám tháng"},
+  {"question":"Bài viết về Voices of the Future được đăng vào ngày nào?","expected_answer":"Bài viết được đăng ngày 25/05/2026.","expected_context":"article_01.md | 25/05/2026"}
 ]
