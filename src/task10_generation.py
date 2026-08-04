@@ -14,11 +14,13 @@ Base URL: "https://openrouter.ai/api/v1", dùng chung interface với OpenAI SDK
 """
 
 import os
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv():
+        return False
 
 load_dotenv()
-
-from .task9_retrieval_pipeline import retrieve
 
 
 # =============================================================================
@@ -138,19 +140,29 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         }
     """
     # Step 1: Retrieve
+    from .task9_retrieval_pipeline import retrieve
+
     chunks = retrieve(query, top_k=top_k)
 
-    # Step 2: Reorder
+    if not chunks:
+        return {
+            "answer": "Tôi không thể xác minh thông tin này từ nguồn hiện có",
+            "sources": [],
+            "retrieval_source": "none",
+        }
+
+    # Step 2: Reorder để tránh lost in the middle
     reordered = reorder_for_llm(chunks)
 
-    # Step 3: Format context
+    # Step 3: Format context với source labels
     context = format_context(reordered)
 
     # Step 4: Build prompt
-    user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
+    user_message = f"Context:\n{context}\n\n---\n\nQuestion: {query}"
 
     # Step 5: Call LLM (OpenRouter — OpenAI-compatible API)
     from openai import OpenAI
+
     api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
     client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
 
@@ -158,7 +170,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         model=LLM_MODEL,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         temperature=TEMPERATURE,
         top_p=TOP_P,
@@ -170,7 +182,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
     return {
         "answer": answer,
         "sources": chunks,
-        "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
+        "retrieval_source": chunks[0].get("source", "hybrid"),
     }
 
 
