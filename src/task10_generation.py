@@ -118,7 +118,12 @@ def format_context(chunks: list[dict]) -> str:
 # GENERATION
 # =============================================================================
 
-def generate_with_citation(query: str, top_k: int = TOP_K, use_reranking: bool = True) -> dict:
+def generate_with_citation(
+    query: str,
+    top_k: int = TOP_K,
+    use_reranking: bool = True,
+    conversation_history: list[dict] | None = None,
+) -> dict:
     """
     End-to-end RAG generation có citation.
 
@@ -140,10 +145,18 @@ def generate_with_citation(query: str, top_k: int = TOP_K, use_reranking: bool =
             'retrieval_source': str  # 'hybrid' hoặc 'pageindex'
         }
     """
-    # Step 1: Retrieve
+    # Step 1: Retrieve. Include recent user turns so follow-up questions
+    # such as "Who issued it?" retain the topic of the conversation.
     from .task9_retrieval_pipeline import retrieve
 
-    chunks = retrieve(query, top_k=top_k, use_reranking=use_reranking)
+    history = conversation_history or []
+    recent_user_turns = [
+        str(message.get("content", "")).strip()
+        for message in history[-6:]
+        if message.get("role") == "user" and message.get("content")
+    ]
+    retrieval_query = "\n".join(recent_user_turns + [query]).strip()
+    chunks = retrieve(retrieval_query, top_k=top_k, use_reranking=use_reranking)
 
     if not chunks:
         return {
@@ -159,7 +172,18 @@ def generate_with_citation(query: str, top_k: int = TOP_K, use_reranking: bool =
     context = format_context(reordered)
 
     # Step 4: Build prompt
-    user_message = f"Context:\n{context}\n\n---\n\nQuestion: {query}"
+    history_text = ""
+    if history:
+        history_lines = []
+        for message in history[-6:]:
+            role = "User" if message.get("role") == "user" else "Assistant"
+            content = str(message.get("content", "")).strip()
+            if content:
+                history_lines.append(f"{role}: {content}")
+        if history_lines:
+            history_text = "Conversation history:\n" + "\n".join(history_lines) + "\n\n---\n\n"
+
+    user_message = f"{history_text}Context:\n{context}\n\n---\n\nQuestion: {query}"
 
     # Step 5: Call LLM (OpenRouter — OpenAI-compatible API)
     from openai import OpenAI

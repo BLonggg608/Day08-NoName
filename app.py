@@ -168,6 +168,28 @@ st.markdown("""
         background: var(--cx-red) !important;
     }
 
+    /* Retrieval mode selector: outlined when idle, accent-filled when selected. */
+    [data-testid="stRadio"] [role="radiogroup"] {
+        gap: 8px;
+    }
+    [data-testid="stRadio"] [role="radiogroup"] > label {
+        border: 2px solid var(--cx-black);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: transparent;
+        color: var(--cx-black) !important;
+        transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+    }
+    [data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
+        background: var(--cx-red);
+        color: var(--cx-white) !important;
+    }
+    [data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) p,
+    [data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) span,
+    [data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) div {
+        color: var(--cx-white) !important;
+    }
+
     /* Chat input styled like a comic caption box */
     [data-testid="stChatInput"] {
         border: 3px solid var(--cx-black) !important;
@@ -314,10 +336,17 @@ with st.sidebar:
     st.divider()
     # st.subheader("⚙️ Thiết lập")  
     top_k = st.slider("Số chunks retrieval (top_k)", 3, 10, 5)
+    retrieval_mode = st.radio(
+        "Chế độ retrieval",
+        options=["Hybrid + Rerank", "Hybrid không Rerank"],
+        index=0,
+        disabled=st.session_state.is_processing,
+    )
+    use_reranking = retrieval_mode == "Hybrid + Rerank"
 
     st.divider()
-    st.caption("**Kiến trúc hệ thống:**")
-    st.caption("Hybrid Retrieval (Semantic + BM25) → RRF Rerank → PageIndex Fallback → LLM Generation có Citation")
+    # st.caption("**Kiến trúc hệ thống:**")
+    # st.caption("Hybrid Retrieval (Semantic + BM25) → RRF Rerank → PageIndex Fallback → LLM Generation có Citation")
 
 # =============================================================================
 # SESSION STATE
@@ -386,7 +415,12 @@ if query:
         with st.spinner("Đang tìm kiếm tài liệu và tổng hợp câu trả lời..."):
             try:
                 from src.task10_generation import generate_with_citation
-                response = generate_with_citation(query, top_k=top_k)
+                response = generate_with_citation(
+                    query,
+                    top_k=top_k,
+                    use_reranking=use_reranking,
+                    conversation_history=st.session_state.messages[:-1],
+                )
                 answer = response.get("answer", "Chưa thể trả lời.")
                 sources = response.get("sources", [])
 
@@ -416,3 +450,5 @@ if query:
         "sources": sources,
     })
     st.session_state.is_processing = False
+    # Re-render widgets so chat input and suggestions become enabled again.
+    st.rerun()
