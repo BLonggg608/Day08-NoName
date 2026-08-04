@@ -1,0 +1,4 @@
+[server]
+# The RAG pipeline uses text transformers only. Disabling module scanning
+# prevents Streamlit's watcher from importing optional torchvision modules.
+fileWatcherType = "none"

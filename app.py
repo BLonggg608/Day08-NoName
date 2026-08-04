@@ -15,6 +15,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Initialize session state before rendering sidebar widgets.
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "pending_query" not in st.session_state:
+    st.session_state.pending_query = None
+if "is_processing" not in st.session_state:
+    st.session_state.is_processing = False
+
 # Thêm project root vào sys.path để import các task từ src/
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -39,12 +47,12 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
 
     :root {
-        --cx-yellow: #FFDE59;
-        --cx-red: #FF3B3B;
-        --cx-blue: #2E5EFF;
-        --cx-black: #0D0D0D;
+        --cx-yellow: #F4E7B8;
+        --cx-red: #C62828;
+        --cx-blue: #185ADB;
+        --cx-black: #17202A;
         --cx-white: #FFFFFF;
-        --cx-panel: #FFF6DC;
+        --cx-panel: #FFFDF5;
     }
 
     html, body, .stApp,
@@ -54,8 +62,8 @@ st.markdown("""
     [data-testid="stToolbar"],
     [data-testid="stBottomBlockContainer"] {
         background-color: var(--cx-yellow) !important;
-        background-image: radial-gradient(circle, rgba(0,0,0,0.12) 1.4px, transparent 1.4px) !important;
-        background-size: 16px 16px !important;
+        background-image: radial-gradient(circle, rgba(23,32,42,0.08) 1.2px, transparent 1.2px) !important;
+        background-size: 18px 18px !important;
     }
 
     [data-testid="stHeader"] { box-shadow: none; }
@@ -107,7 +115,7 @@ st.markdown("""
     /* Sidebar as a comic panel with thick border */
     section[data-testid="stSidebar"] {
         background-color: var(--cx-panel);
-        border-right: 4px solid var(--cx-black);
+        border-right: 3px solid var(--cx-black);
     }
     section[data-testid="stSidebar"] h3 {
         color: var(--cx-blue) !important;
@@ -259,6 +267,18 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 4px 4px 0 var(--cx-black);
     }
+
+    /* Keep source text readable on the cream expander background. */
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] span,
+    [data-testid="stExpander"] div {
+        color: var(--cx-black) !important;
+    }
+    [data-testid="stExpander"] code {
+        color: #333333 !important;
+        background-color: #F1E8C8 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -268,24 +288,31 @@ st.markdown("""
 
 with st.sidebar:
     st.title("🎓 University Services RAG")
-    st.caption("Trợ lý hỏi đáp về dịch vụ và chính sách đại học (học phí, học bổng, ký túc xá, thư viện)")
+    st.caption("Trợ lý hỏi đáp về dịch vụ và chính sách đại học")
 
     st.divider()
 
     st.subheader("💡 Câu hỏi gợi ý")
     suggestions = [
-        "Học phí tại RMIT Vietnam là bao nhiêu?",
-        "Làm sao để đặt phòng học nhóm ở thư viện?",
-        "Điều kiện xin học bổng Academic Achievement?",
-        "Dịch vụ hỗ trợ chỗ ở cho sinh viên như thế nào?",
-        "Cách đăng ký học phần qua myRMIT?",
+        "Student Fees & Charges Guide được cập nhật lần cuối vào ngày nào?",
+        "Ai ban hành Student Fees & Charges Guide?",
+        "Student Fees & Charges Guide có mục Tuition Fees không?",
+        "Brochure dành cho nhóm sinh viên nào?",
+        "Chương trình Voices of the Future Fellow kéo dài bao lâu?",
     ]
-    for s in suggestions:
-        if st.button(s, use_container_width=True, key=f"sug_{s[:20]}"):
+    for index, s in enumerate(suggestions):
+        if st.button(
+            s,
+            use_container_width=True,
+            key=f"suggestion_{index}",
+            disabled=st.session_state.is_processing,
+        ):
             st.session_state["pending_query"] = s
+            st.session_state.is_processing = True
+            st.rerun()
 
     st.divider()
-    st.subheader("⚙️ Thiết lập")
+    # st.subheader("⚙️ Thiết lập")  
     top_k = st.slider("Số chunks retrieval (top_k)", 3, 10, 5)
 
     st.divider()
@@ -296,11 +323,6 @@ with st.sidebar:
 # SESSION STATE
 # =============================================================================
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "pending_query" not in st.session_state:
-    st.session_state.pending_query = None
-
 # =============================================================================
 # MAIN CHAT AREA
 # =============================================================================
@@ -309,7 +331,7 @@ st.markdown(
     '<div class="main-title-box"><h1>🎓 University Services RAG Chatbot</h1></div>',
     unsafe_allow_html=True,
 )
-st.caption("Hệ thống hỏi đáp thông tin dịch vụ đại học (Học phí, Học bổng, Ký túc xá, Thư viện)")
+st.caption("Hệ thống hỏi đáp thông tin dịch vụ đại học")
 
 AVATARS = {
     "user": str(PROJECT_ROOT / "spidey.png"),
@@ -336,8 +358,20 @@ for msg in st.session_state.messages:
 # =============================================================================
 
 # Xử lý khi bấm nút gợi ý hoặc nhập câu hỏi mới
-user_input = st.chat_input("Nhập câu hỏi của bạn về chính sách/dịch vụ đại học...")
-query = user_input or st.session_state.pending_query
+user_input = st.chat_input(
+    "Đang xử lý câu hỏi..." if st.session_state.is_processing
+    else "Nhập câu hỏi của bạn về chính sách/dịch vụ đại học...",
+    disabled=st.session_state.is_processing,
+)
+
+# Move a newly submitted chat query to a second run so the input and
+# suggestion buttons are visibly disabled before the model call starts.
+if user_input and not st.session_state.is_processing:
+    st.session_state.pending_query = user_input
+    st.session_state.is_processing = True
+    st.rerun()
+
+query = st.session_state.pending_query if st.session_state.is_processing else None
 
 if query:
     st.session_state.pending_query = None
@@ -381,3 +415,4 @@ if query:
         "content": answer,
         "sources": sources,
     })
+    st.session_state.is_processing = False
