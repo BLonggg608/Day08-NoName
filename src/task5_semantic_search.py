@@ -1,11 +1,10 @@
 """Task 5 — Semantic Search và HyDE trên ChromaDB."""
 
 import os
-from functools import lru_cache
 
 import chromadb
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+from .embedding_provider import embed_texts
 
 from .task4_chunking_indexing import (
     CHROMA_DIR,
@@ -19,12 +18,6 @@ HYDE_MODEL = os.getenv("HYDE_MODEL", "openai/gpt-4o-mini")
 HYDE_SYSTEM_PROMPT = """Bạn là trợ lý viết tài liệu phục vụ tìm kiếm ngữ nghĩa.
 Hãy viết một đoạn văn ngắn có khả năng xuất hiện trong tài liệu và trả lời trực tiếp
 câu hỏi của người dùng. Không thêm lời dẫn, không nêu rằng đây là câu trả lời giả định."""
-
-
-@lru_cache(maxsize=1)
-def _get_embedding_model() -> SentenceTransformer:
-    """Tải một lần đúng embedding model đã dùng để index ở Task 4."""
-    return SentenceTransformer(EMBEDDING_MODEL)
 
 
 def _get_collection():
@@ -67,7 +60,7 @@ def _generate_hypothetical_doc(query: str) -> str:
         hypothetical_doc = response.choices[0].message.content
         return hypothetical_doc.strip() if hypothetical_doc else query
     except Exception as exc:
-        print(f"⚠ HyDE không khả dụng, dùng query gốc: {exc}")
+        print(f"WARNING: HyDE unavailable; using original query: {exc}")
         return query
 
 
@@ -81,10 +74,7 @@ def _search_text(search_text: str, top_k: int) -> list[dict]:
     if collection_size == 0:
         return []
 
-    query_vector = _get_embedding_model().encode(
-        search_text,
-        normalize_embeddings=True,
-    ).tolist()
+    query_vector = embed_texts([search_text])[0]
     results = collection.query(
         query_embeddings=[query_vector],
         n_results=min(top_k, collection_size),

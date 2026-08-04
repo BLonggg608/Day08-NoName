@@ -7,8 +7,8 @@ from pathlib import Path
 
 # Thư viện cần thiết
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 import chromadb
+from .embedding_provider import embed_texts, embedding_description
 
 # Đường dẫn thư mục
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
@@ -20,7 +20,7 @@ CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 # =============================================================================
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 100
-EMBEDDING_MODEL = "BAAI/bge-m3" 
+EMBEDDING_MODEL = embedding_description()
 COLLECTION_NAME = "university_services"
 
 
@@ -33,7 +33,7 @@ def load_documents() -> list[dict]:
     documents = []
     
     if not STANDARDIZED_DIR.exists():
-        print(f"❌ Thư mục không tồn tại: {STANDARDIZED_DIR}")
+        print(f"ERROR: standardized directory not found: {STANDARDIZED_DIR}")
         return documents
 
     for md_file in STANDARDIZED_DIR.rglob("*.md"):
@@ -68,15 +68,14 @@ def chunk_documents(documents: list[dict]) -> list[dict]:
 
 def embed_chunks(chunks: list[dict]) -> list[dict]:
     """3. Embed chunks bằng SentenceTransformer BAAI/bge-m3"""
-    print(f"⏳ Đang tải mô hình '{EMBEDDING_MODEL}'...")
-    model = SentenceTransformer(EMBEDDING_MODEL)
+    print(f"Embedding provider: {EMBEDDING_MODEL}")
     texts = [c["content"] for c in chunks]
     
-    print("⏳ Đang mã hóa vector (Embedding)...")
-    embeddings = model.encode(texts, show_progress_bar=True)
+    print("Creating embeddings...")
+    embeddings = embed_texts(texts)
     
     for chunk, emb in zip(chunks, embeddings):
-        chunk["embedding"] = emb.tolist()
+        chunk["embedding"] = emb
     return chunks
 
 
@@ -84,7 +83,7 @@ def index_to_vectorstore(chunks: list[dict]):
     """4. Upsert chunks + embeddings vào ChromaDB persistent"""
     # ⚡ Lưu ý của Leader: Xoá thư mục chroma_db cũ trước khi tạo mới
     if CHROMA_DIR.exists():
-        print("🧹 Đang xóa ChromaDB cũ để tránh rác (theo yêu cầu Leader)...")
+        print("Removing existing ChromaDB...")
         shutil.rmtree(CHROMA_DIR)
         
     CHROMA_DIR.mkdir(parents=True, exist_ok=True)
@@ -102,7 +101,7 @@ def index_to_vectorstore(chunks: list[dict]):
     # Tạo ID duy nhất cho mỗi chunk
     ids = [f"{c['metadata']['source']}_chunk_{c['metadata']['chunk_index']}" for c in chunks]
     
-    print("⏳ Đang Upsert dữ liệu vào ChromaDB...")
+    print("Writing vectors to ChromaDB...")
     collection.upsert(
         ids=ids,
         documents=[c["content"] for c in chunks],
@@ -114,26 +113,26 @@ def index_to_vectorstore(chunks: list[dict]):
 def run_pipeline():
     """Chạy toàn bộ pipeline Task 4."""
     print("=" * 50)
-    print("🚀 Bắt đầu Task 4: Chunking & Indexing")
-    print(f"⚙️ Config: {CHUNK_SIZE} size, {CHUNK_OVERLAP} overlap")
-    print(f"🧠 Model: {EMBEDDING_MODEL}")
-    print(f"🗄️ Collection: {COLLECTION_NAME}")
+    print("Task 4: Chunking and Indexing")
+    print(f"Config: chunk_size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP}")
+    print(f"Embedding: {EMBEDDING_MODEL}")
+    print(f"Collection: {COLLECTION_NAME}")
     print("=" * 50)
 
     docs = load_documents()
     if not docs:
-        print("❌ Lỗi: Không có dữ liệu đầu vào. Hãy chắc chắn Task 3 đã chạy thành công!")
+        print("ERROR: no input documents. Run Task 3 first.")
         return
-    print(f"✓ Đã đọc {len(docs)} files markdown.")
+    print(f"Loaded {len(docs)} Markdown files.")
 
     chunks = chunk_documents(docs)
-    print(f"✓ Đã chia thành {len(chunks)} chunks.")
+    print(f"Created {len(chunks)} chunks.")
 
     chunks = embed_chunks(chunks)
-    print(f"✓ Đã nhúng (embed) thành công {len(chunks)} vectors.")
+    print(f"Created {len(chunks)} embeddings.")
 
     index_to_vectorstore(chunks)
-    print(f"🎉 HOÀN THÀNH! Dữ liệu đã được lưu an toàn tại: {CHROMA_DIR.absolute()}")
+    print(f"Done. ChromaDB saved at: {CHROMA_DIR.absolute()}")
 
 
 if __name__ == "__main__":
